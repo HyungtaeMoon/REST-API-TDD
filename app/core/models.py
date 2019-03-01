@@ -33,5 +33,5 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_staff = models.BooleanField(default=False)
 
     objects = UserManager()
-
+    # USERNAME 를 email 로 사용
     USERNAME_FIELD = 'email'
