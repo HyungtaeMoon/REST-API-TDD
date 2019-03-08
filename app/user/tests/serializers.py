@@ -19,6 +19,17 @@ class UserSerializer(serializers.ModelSerializer):
         """암호화(encrypted) 된 비밀번호로 사용자를 생성"""
         return get_user_model().objects.create_user(**validated_data)
 
+    def update(self, instance, validated_data):
+        """유저 업데이트, 암호를 올바르게 설정하고 반환"""
+        password = validated_data.pop('password', None)
+        user = super().update(instance, validated_data)
+
+        if password:
+            user.set_password(password)
+            user.save()
+
+        return user
+
 
 class AuthTokenSerializer(serializers.Serializer):
     """유저 인증 객체 직렬화(Serializer)"""
