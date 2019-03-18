@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.auth.models import BaseUserManager, PermissionsMixin, AbstractBaseUser
 from django.db import models
 
@@ -35,3 +36,12 @@ class User(AbstractBaseUser, PermissionsMixin):
     objects = UserManager()
     # USERNAME 를 email 로 사용
     USERNAME_FIELD = 'email'
+
+
+class Tag(models.Model):
+    """레시피에 사용할 태그"""
+    name = models.CharField(max_length=255)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.name
