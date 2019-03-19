@@ -65,3 +65,23 @@ class PrivateTagsApiTests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(len(res.data), 1)
         self.assertEqual(res.data[0]['name'], tag.name)
+
+    def test_create_tag_successful(self):
+        """새로 생성한 태그 테스트"""
+        # payload 는 사용에 있어서 전송되는 데이터인데, 보안쪽에서는 이 payload 의 패킷을 분석한다.
+        # 그러나 웹 개발에서는 단순히 body 에서 확인하고자 하는 데이터로 이해를 하고 넘어가자.
+        payload = {'name': 'Simple'}
+        self.client.post(TAGS_URL, payload)
+
+        exists = Tag.objects.filter(
+            user=self.user,
+            name=payload['name']
+        ).exists()
+        self.assertTrue(exists)
+
+    def test_create_tag_invalid(self):
+        """invalid 한 payload 의 태그를 생성했을 경우의 테스트"""
+        payload = {'name': ''}
+        res = self.client.post(TAGS_URL, payload)
+
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
