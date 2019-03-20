@@ -6,7 +6,7 @@ from . import views
 # view 와 url 을 관례적으로 연결하기 위한 라우터를 생성
 router = DefaultRouter()
 router.register('tags', views.TagViewSet)
-
+router.register('ingredients', views.IngredientViewSet)
 app_name = 'recipe'
 
 urlpatterns = [
