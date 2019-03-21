@@ -62,3 +62,25 @@ class PrivateIngredientsAPITests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(len(res.data), 1)
         self.assertEqual(res.data[0]['name'], ingredient.name)
+
+    def test_create_ingredient_successful(self):
+        """새로 생성한 성분 테스트"""
+        payload = {'name': 'Cabbage'}
+        # post 요청으로 payload 를 보냄
+        self.client.post(INGREDIENTS_URL, payload)
+
+        # exists() 메서드는 쿼리셋 캐시를 만들지 않으면서 레코드가 존재하는지 검사
+        # 메모리 사용은 최적화되지만 쿼리셋 캐시는 생성되지 않아 DB 쿼리가 중복될 수 있음
+        exists = Ingredient.objects.filter(
+            user=self.user,
+            name=payload['name']
+        ).exists()
+
+        self.assertTrue(exists)
+
+    def test_create_ingredient_invalid(self):
+        """invalid 한 payload 의 태그를 생성했을 경우의 테스트"""
+        payload = {'name': ''}
+        res = self.client.post(INGREDIENTS_URL, payload)
+
+        self.assertTrue(res.status_code, status.HTTP_400_BAD_REQUEST)
