@@ -6,10 +6,25 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from core.models import Recipe
-from recipe.serializer import RecipeSerializer
+from core.models import Recipe, Tag, Ingredient
+from recipe.serializer import RecipeSerializer, RecipeDetailSerializer
 
 RECIPES_URL = reverse('recipe:recipe-list')
+
+
+def sample_tag(user, name='Main course'):
+    """태그 객체 생성"""
+    return Tag.objects.create(user=user, name=name)
+
+
+def sample_ingredient(user, name='Cinnammon'):
+    """성분 객체 생성"""
+    return Ingredient.objects.create(user=user, name=name)
+
+
+def detail_url(recipe_id):
+    """recipe detail URL 을 리턴"""
+    return reverse('recipe:recipe-detail', args=[recipe_id])
 
 
 def sample_recipe(user, **params):
@@ -76,6 +91,24 @@ class PrivateRecipeApiTests(TestCase):
         # RecipeSerializer 와 비교하기 위해 쿼리셋을 반환하는 filter 를 사용
         recipes = Recipe.objects.filter(user=self.user)
         serializer = RecipeSerializer(recipes, many=True)
+
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(len(res.data), 1)
+        self.assertEqual(res.data, serializer.data)
+
+    def test_view_recipe_detail(self):
+        """recipe 세부 사항 보기 테스트"""
+        recipe = sample_recipe(user=self.user)
+        recipe.tags.add(sample_tag(user=self.user))
+        recipe.ingredients.add(sample_ingredient(user=self.user))
+
+        # api/recipe/recipes/6/
+        url = detail_url(recipe.id)
+        res = self.client.get(url)
+
+        # 단일 객체를 받기 때문에 many=True 옵션은 지정하지 않음
+        # serializer 는 데이터를 사전으로 변환
+        # return 되는 OrderedDict 는 순서를 기억하는 사전형
+        serializer = RecipeDetailSerializer(recipe)
+
         self.assertEqual(res.data, serializer.data)

@@ -3,7 +3,7 @@ from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 
 from core.models import Tag, Ingredient, Recipe
-from .serializer import TagSerializer, IngredientSerializer, RecipeSerializer
+from .serializer import TagSerializer, IngredientSerializer, RecipeSerializer, RecipeDetailSerializer
 
 
 class BaseRecipeAttrViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.CreateModelMixin):
@@ -42,3 +42,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         """최근 인증된 사용자에 대해서만 객체 반환"""
         return self.queryset.filter(user=self.request.user)
+
+    def get_serializer_class(self):
+        """적절한 serializer 클래스 반환"""
+        # ModelViewSet.RetrieveMixin.retrieve
+        if self.action == 'retrieve':
+            return RecipeDetailSerializer
+
+        return self.serializer_class
