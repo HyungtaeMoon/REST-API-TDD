@@ -112,3 +112,63 @@ class PrivateRecipeApiTests(TestCase):
         serializer = RecipeDetailSerializer(recipe)
 
         self.assertEqual(res.data, serializer.data)
+
+    def test_create_basic_recipe(self):
+        """recipe 생성 테스트"""
+        payload = {
+            'title': 'Cheese cake',
+            'time_minutes': 30,
+            'price': 10.00,
+        }
+        res = self.client.post(RECIPES_URL, payload)
+
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        recipe = Recipe.objects.get(id=res.data['id'])
+        # recipe 객체에 payload 의 key 값이 있는지 확인
+        for key in payload.keys():
+            # 변수를 전달하여 속성에 접근 recipe.key 는 검색이 되지 않음
+            # recipe.title, recipe.time_minutes, recipe.price 를 순차 검색
+            self.assertEqual(payload[key], getattr(recipe, key))
+
+    def test_create_recipe_with_tags(self):
+        """tags 를 포함한 recipe 생성 테스트"""
+        tags1 = sample_tag(user=self.user, name='Sweet')
+        tags2 = sample_tag(user=self.user, name='Desert')
+        # 현재 모델 관계에서는 tags 의 객체는 400 에러를 발생, tags.id 로 참조해야 함
+        payload = {
+            'title': 'Chocolate Strawberry Cake',
+            'tags': [tags1.id, tags2.id],
+            'time_minutes': 30,
+            'price': 10.00,
+        }
+
+        res = self.client.post(RECIPES_URL, payload)
+
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        recipe = Recipe.objects.get(id=res.data['id'])
+        # Many-To-Many 필드 관계이며, 해당 recipe 를 참조한 tag 객체를 모두 불러옴
+        tags = recipe.tags.all()
+        # tags1, tags2 객체 2개가 존재하는지 확인
+        self.assertEqual(tags.count(), 2)
+        # tags 안에 멤버십으로 tags1, tags2 가 포함되는지 확인
+        self.assertIn(tags1, tags)
+        self.assertIn(tags2, tags)
+
+    def test_create_recipe_with_ingredients(self):
+        """ingredients 를 포함한 recipe 생성 테스트"""
+        ingredient1 = sample_ingredient(user=self.user, name='Carrot')
+        ingredient2 = sample_ingredient(user=self.user, name='Potato')
+        payload = {
+            'title': 'Korean Style Curry',
+            'ingredients': [ingredient1.id, ingredient2.id],
+            'time_minutes': 30,
+            'price': 10.00,
+        }
+        res = self.client.post(RECIPES_URL, payload)
+
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        recipe = Recipe.objects.get(id=res.data['id'])
+        ingredients = recipe.ingredients.all()
+        self.assertEqual(ingredients.count(), 2)
+        self.assertIn(ingredient1, ingredients)
+        self.assertIn(ingredient2, ingredients)
