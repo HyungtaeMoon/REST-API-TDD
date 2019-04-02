@@ -17,7 +17,7 @@ def sample_tag(user, name='Main course'):
     return Tag.objects.create(user=user, name=name)
 
 
-def sample_ingredient(user, name='Cinnammon'):
+def sample_ingredient(user, name='Cinnamon'):
     """성분 객체 생성"""
     return Ingredient.objects.create(user=user, name=name)
 
@@ -172,3 +172,66 @@ class PrivateRecipeApiTests(TestCase):
         self.assertEqual(ingredients.count(), 2)
         self.assertIn(ingredient1, ingredients)
         self.assertIn(ingredient2, ingredients)
+
+    def test_one_create_tag(self):
+        """
+        sample_tag 함수에서 name='Main course' 로 설정.
+        tag 객체를 생성할 때 name=None 이어도 이미 생성한 Main course 로 받아와지는지 테스트
+        """
+        tag = sample_tag(user=self.user)
+        payload = {
+            'user': self.user,
+            'name': 'Main course',
+        }
+        # Main course
+        print(tag.name)
+        self.assertEqual(tag.name, payload['name'])
+
+    def test_partial_update_recipe(self):
+        """
+        patch 를 통한 recipe 업데이트 테스트
+
+        patch: 자원의 일부를 수정(요청 시에 수정하고자 하는 자원만 있으면 됨)
+        """
+        recipe = sample_recipe(user=self.user)
+        recipe.tags.add(sample_tag(user=self.user))
+        new_tag = sample_tag(user=self.user, name='Curry')
+
+        payload = {'title': 'Chicken Stew', 'tags': new_tag.id}
+        url = detail_url(recipe.id)
+        self.client.patch(url, payload)
+
+        # refresh_from_db() 함수를 사용하지 않으면 새로 정보가 갱신되지 않음(필수 메서드)
+        recipe.refresh_from_db()
+        # recipe.title 이 'sample recipe' 에서 Chicken Stew' 로 갱신 되었는지 확인
+        self.assertEqual(recipe.title, payload['title'])
+        # Many-To-Many 필드에서 tag 속성의 len()은 objects Manager 을 사용할 수 없기 때문에
+        #   tags 변수에 해당 recipe 의 모든 tag 를 쿼리셋으로 가져옴
+        tags = recipe.tags.all()
+        self.assertEqual(len(tags), 1)
+        self.assertIn(new_tag, tags)
+
+    def test_full_update_recipe(self):
+        """
+        put 을 통한 recipe 업데이트 테스트
+
+        put: 자원의 전체를 수정(요청 시에 해당하는 자원 모두를 필요로 함)
+        """
+        # 계속 사용하게 되는 이 self.user 는 force_authenticate() 로 인증된 유저임을 기억해둘 것
+        recipe = sample_recipe(user=self.user)
+        recipe.tags.add(sample_tag(user=self.user))
+
+        payload = {
+            'title': 'Tomato Spaghetti',
+            'time_minutes': 25,
+            'price': 5.00
+        }
+        url = detail_url(recipe.id)
+        self.client.put(url, payload)
+
+        recipe.refresh_from_db()
+        self.assertEqual(recipe.title, payload['title'])
+        self.assertEqual(recipe.time_minutes, payload['time_minutes'])
+        self.assertEqual(recipe.price, payload['price'])
+        tags = recipe.tags.all()
+        self.assertEqual(len(tags), 0)
