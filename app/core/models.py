@@ -1,6 +1,25 @@
+import uuid
+import os
+
 from django.conf import settings
 from django.contrib.auth.models import BaseUserManager, PermissionsMixin, AbstractBaseUser
 from django.db import models
+
+
+def recipe_image_file_path(instance, filename):
+    """
+    파일 경로에 새로운 recipe 이미지를 생성
+
+    string = 'hello.world.student'
+    string.split('.')[-1] # student
+    string.split('.')[-2] # world
+    """
+    ext = filename.split('.')[-1]
+    # UUID: aea3212c-f81d-4e94-a2e1-ff50ff4ec8f9
+    # 32개의 16진수, 5개 그룹(하이픈)을 가짐
+    filename = f'{uuid.uuid4()}.{ext}'
+
+    return os.path.join('uploads/recipe/', filename)
 
 
 class UserManager(BaseUserManager):
@@ -67,6 +86,7 @@ class Recipe(models.Model):
     link = models.CharField(max_length=255, blank=True)
     ingredients = models.ManyToManyField('Ingredient')
     tags = models.ManyToManyField('Tag')
+    image = models.ImageField(null=True, upload_to=recipe_image_file_path)
 
     def __str__(self):
         return self.title

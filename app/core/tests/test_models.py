@@ -1,7 +1,9 @@
+from unittest.mock import patch
+
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 
-from ..models import Tag, Ingredient, Recipe
+from ..models import Tag, Ingredient, Recipe, recipe_image_file_path
 
 
 def sample_user(email='hello@world.com', password='test123123'):
@@ -70,3 +72,17 @@ class ModelTest(TestCase):
         )
 
         self.assertTrue(str(recipe), recipe.title)
+
+    # models.recipe_image_file_path 에서 uuid4() 메서드 사용
+    @patch('uuid.uuid4')
+    def test_recipe_file_name_uuid(self, mock_uuid):
+        """올바른 위치에 이미지 파일이 저장되는지 테스트"""
+        uuid = 'test-uuid'
+        # uuid.uuid4 를 오버라이딩하여 uuid 는 'test-uuid' 로 사용됨
+        mock_uuid.return_value = uuid
+        # recipe_image_file_path 에서 instance 는 받지 않기 때문에 None
+        file_path = recipe_image_file_path(None, 'myimage.jpg')
+
+        # uploads/recipe/test-uuid.jpg
+        exp_path = f'uploads/recipe/{uuid}.jpg'
+        self.assertEqual(file_path, exp_path)
