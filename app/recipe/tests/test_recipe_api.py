@@ -1,3 +1,6 @@
+import os
+import tempfile
+
 from django.contrib.auth import get_user_model
 # TestCase 는 transaction 테스트 케이스로 모든 작업이 끝났을 때 갱신이 됨
 # 중간에 오류가 발생했을 경우에는 그 전에 했던 작업들도 모두 기본 초기화
@@ -9,7 +12,14 @@ from rest_framework.test import APIClient
 from core.models import Recipe, Tag, Ingredient
 from recipe.serializer import RecipeSerializer, RecipeDetailSerializer
 
+from PIL import Image
+
 RECIPES_URL = reverse('recipe:recipe-list')
+
+
+def image_upload_url(recipe_id):
+    """recipe image upload URL 을 리턴"""
+    return reverse('recipe:recipe-upload-image', args=[recipe_id])
 
 
 def sample_tag(user, name='Main course'):
@@ -235,3 +245,43 @@ class PrivateRecipeApiTests(TestCase):
         self.assertEqual(recipe.price, payload['price'])
         tags = recipe.tags.all()
         self.assertEqual(len(tags), 0)
+
+
+class RecipeImageUploadTests(TestCase):
+
+    def setUp(self):
+        self.client = APIClient()
+        self.user = get_user_model().objects.create_user(
+            'test@master.com',
+            'pass1234'
+        )
+        self.client.force_authenticate(self.user)
+        self.recipe = sample_recipe(user=self.user)
+
+    def tearDown(self):
+        self.recipe.image.delete()
+
+    def test_upload_image_to_recipe(self):
+        """recipe 에 이미지를 업로딩하는 테스트"""
+        url = image_upload_url(self.recipe.id)
+        # tempfile 은 특정 scope 안에서 사용되다가 사라짐
+        # NamedTemporaryFile 은 파일 이름을 반드시 가져야 함
+        with tempfile.NamedTemporaryFile(suffix='.jpg') as temp:
+            # PIL.Image 는 이미지를 로드 또는 생성하는 기능을 가지고 있음
+            # 10 x 10 이미지 파일 생성
+            img = Image.new('RGB', (10, 10))
+            img.save(temp, format('JPEG'))
+            temp.seek(0)
+            res = self.client.post(url, {'image': temp}, format('multipart'))
+
+        self.recipe.refresh_from_db()
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertIn('image', res.data)
+        self.assertTrue(os.path.exists(self.recipe.image.path))
+
+    def test_upload_image_bad_request(self):
+        """유효하지 않은 이미지를 업로딩 할 경우 테스트"""
+        url = image_upload_url(self.recipe.id)
+        res = self.client.post(url, {'image': 'notimage'}, format='multipart')
+
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)

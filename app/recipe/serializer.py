@@ -39,3 +39,11 @@ class RecipeDetailSerializer(RecipeSerializer):
     """recipe detail 직렬화"""
     ingredients = IngredientSerializer(many=True, read_only=True)
     tags = TagSerializer(many=True, read_only=True)
+
+
+class RecipeImageSerializer(serializers.ModelSerializer):
+    """recipe 에 이미지를 업로드하는 직렬화 모델 생성"""
+    class Meta:
+        model = Recipe
+        fields = ('id', 'image')
+        read_only_Fields = ('id',)
