@@ -42,9 +42,29 @@ class RecipeViewSet(viewsets.ModelViewSet):
     authentication_classes = (TokenAuthentication,)
     permission_classes = (IsAuthenticated,)
 
+    def _params_to_ints(self, qs):
+        """list 로 된 str 타입의 ID 를 int 타입으로 형변환"""
+        return [int(str_id) for str_id in qs.split(',')]
+
     def get_queryset(self):
-        """최근 인증된 사용자에 대해서만 객체 반환"""
-        return self.queryset.filter(user=self.request.user)
+        """인증 된 유저의 recipe 필터 검색"""
+        tags = self.request.query_params.get('tags')
+        ingredients = self.request.query_params.get('ingredients')
+        # queryset 은 Recipe 모델이고, 이미 objects 매니저를 가지고 있기 때문에
+        # 접근할 때는 objects 를 사용하지 않고, queryset.filter() 의 기능을 수행할 수 있다
+        queryset = self.queryset
+        if tags:
+            # 해당하는 queryset 을 순회하여 str 을 int 로 형변환
+            tag_ids = self._params_to_ints(tags)
+            # 메인 모델인 recipe 에서 tag_ids 와 일치하는 tags 를 모두 쿼리셋으로 담는다
+            queryset = queryset.filter(tags__id__in=tag_ids)
+        if ingredients:
+            ingredient_id = self._params_to_ints(ingredients)
+            queryset = queryset.filter(ingredients__id__in=ingredient_id)
+        # http://127.0.0.1:8000/api/recipe/recipes/?tags=2&ingredients=1
+        return queryset.filter(user=self.request.user)
+        # """최근 인증된 사용자에 대해서만 객체 반환"""
+        # return self.queryset.filter(user=self.request.user)
 
     def get_serializer_class(self):
         """적절한 serializer 클래스 반환"""
