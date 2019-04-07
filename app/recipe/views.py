@@ -16,7 +16,17 @@ class BaseRecipeAttrViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixi
 
     def get_queryset(self):
         """최근 인증된 사용자에 대해서만 객체 반환"""
-        return self.queryset.filter(user=self.request.user).order_by('-name')
+        # recipe 에 사용되지 않는 tag, ingredient 를 assigned_only 변수에 할당
+        assigned_only = bool(int(self.request.query_params.get('assigned_only', 0)))
+        queryset = self.queryset
+        if assigned_only:
+            queryset = queryset.filter(recipe__isnull=False)
+
+        # recipe1.tags: 강남맛집, recipe2.tags: 강남맛집
+        # 2개 모두 tags 가 강남맛집을 가져도 1개로 unique 한 값으로 인식하여 쿼리셋을 리턴
+        # filter() 의 결과값을 리턴 시켜줘야 하기 때문에 self 는 삭제
+        return queryset.filter(user=self.request.user).order_by('-name').distinct()
+        # return self.queryset.filter(user=self.request.user).order_by('-name')
 
     def perform_create(self, serializer):
         """새로운 객체를 생성"""
