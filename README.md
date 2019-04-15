@@ -10,9 +10,25 @@ docker-compose up
 docker-compose run --rm app sh -c "python manage.py test"
 ```
 
+### OverView
+
+```python
+http://localhost:8000/api/user/
+http://localhost:8000/api/user/create/
+http://localhost:8000/api/token/
+http://localhost:8000/api/me/
+
+http://localhost:8000/api/root/
+http://localhost:8000/api/recipe/recipes/
+http://localhost:8000/api/recipe/recipes/<int:recipe_pk>/
+http://localhost:8000/api/recipe/ingredients/
+http://localhost:8000/api/recipe/tags/
+
+```
 
 ### REST-API
---
+
+---------------
 
 #### User Create(회원가입) / POST
 
@@ -50,7 +66,7 @@ Sample Response:
 }
 ```
 
--
+======================================
 
 #### User Token (토큰 발급) / POST
 
@@ -58,7 +74,7 @@ Sample Response:
 - 브라우저에서 Token 값을 항상 가지고 있도록 modheader 플러그인 사용
 	- <a href="https://chrome.google.com/webstore/detail/modheader/idgpnmonknjnojddfkpgkljpfnnfcklj" target="_blank">modheader (토큰 관리)</a>
 
-![modheader](./modheader.png)
+![modheader](img/modheader.png)
 
 
 Sample Request:
@@ -91,6 +107,7 @@ Sample Response:
 
 ```
 
+======================================
 
 #### User Token 확인 / `GET`, PUT
 
@@ -127,7 +144,7 @@ Sample Response:
 }
 ```
 
---
+======================================
 
 #### User Token 확인 / GET, `PUT`
 
@@ -167,7 +184,7 @@ Sample Response:
 ```
 
 
---
+======================================
 
 #### API Root / GET
 
@@ -203,7 +220,7 @@ Sample Response:
 }
 ```
 
---
+======================================
 
 #### Recipe Create / POST
 
@@ -246,7 +263,7 @@ Sample Response:
 }
 ```
 
---
+======================================
 
 #### Recipe content 수정 / PATCH
 : 일부 자원만 수정하기 때문에 PATCH
@@ -291,7 +308,7 @@ Sample Response:
 }
 ```
 
---
+======================================
 
 #### Tag, Ingredient / `POST`, GET
 
@@ -328,7 +345,7 @@ Sample Response:
 }
 ```
 
---
+======================================
 
 
 #### Tag, Ingredient / POST, `GET`
