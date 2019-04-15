@@ -49,7 +49,7 @@ class PrivateIngredientsAPITests(TestCase):
         self.assertEqual(res.data, serializer.data)
 
     def test_ingredients_limited_to_user(self):
-        """인증된 유저만 결과값을 반환할 수 있는지 태그인지 테스트"""
+        """인증된 유저만 결과값을 반환할 수 있는지 ingredient 인지 테스트"""
         user2 = get_user_model().objects.create_user(
             'other@test.com',
             'pass1234'
@@ -79,7 +79,7 @@ class PrivateIngredientsAPITests(TestCase):
         self.assertTrue(exists)
 
     def test_create_ingredient_invalid(self):
-        """invalid 한 payload 의 태그를 생성했을 경우의 테스트"""
+        """invalid 한 payload 의 ingredient 를 생성했을 경우의 테스트"""
         payload = {'name': ''}
         res = self.client.post(INGREDIENTS_URL, payload)
 

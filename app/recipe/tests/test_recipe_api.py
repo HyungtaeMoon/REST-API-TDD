@@ -194,7 +194,7 @@ class PrivateRecipeApiTests(TestCase):
             'name': 'Main course',
         }
         # Main course
-        print(tag.name)
+        # print(tag.name)
         self.assertEqual(tag.name, payload['name'])
 
     def test_partial_update_recipe(self):
